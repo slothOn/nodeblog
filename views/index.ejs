@@ -1,11 +1,17 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <title><%= title %></title>
-    <link rel='stylesheet' href='/stylesheets/style.css' />
-  </head>
-  <body>
-    <h1><%= title %></h1>
-    <p>Welcome to <%= title %></p>
-  </body>
-</html>
+<%- include header %>
+<% posts.forEach(function (item, index) { %>
+    <p><a href="/u/<%= item.name %>/<%= item.time.day%>/<%= item.title %>"><h2><%= item.title %></h2></a></p>
+    <p class="info">
+        作者:<a href="/u/<%= item.name %>"><%= item.name %></a> |
+        日期:<%= item.time.minute %>
+        标签:
+        <% item.tags.forEach(function (tag, index) { %>
+            <% if (tag) {%>
+                <a class="tag" href="/tag/<%= tag %>"><%= tag %></a>
+            <% } %>
+        <% }) %>
+    </p>
+    <p><%- item.post %></p>
+<% }) %>
+<%- include paging %>
+<%- include footer %>

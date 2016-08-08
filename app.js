@@ -5,13 +5,17 @@ var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 
-var routes = require('./routes/index');
-var users = require('./routes/users');
-
+var router = require('./routes/index');
+//var users = require('./routes/users');
+var settings = require('./settings');
+var session = require('express-session');
+var MongoStore = require('connect-mongo')(session);
+var multer = require('multer');
 var app = express();
+var flash = require('connect-flash');
 
 // view engine setup
-app.set('views', path.join(__dirname, 'views'));
+app.set('views', path.join(__dirname, 'views'));//模板文件存放地
 app.set('view engine', 'ejs');
 
 // uncomment after placing your favicon in /public
@@ -20,22 +24,42 @@ app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(session({
+  secret: settings.cookieSecret,
+  key: settings.db,//cookie name
+  cookie: {maxAge: 1000 * 60 * 60 * 24 * 30},//30 days
+  store: new MongoStore({
+    url: 'mongodb://' + settings.host + ':' + settings.port + '/' + settings.db
+  })
+}));
+//临时session数据存储
+app.use(flash());
+//文件上传
+var storage  = multer.diskStorage({
+  destination: function(req, file, cb) {
+    cb(null, './public/images');
+  },
+  filename: function(req, file, cb) {
+    cb(null, file.originalname);
+  }
+});
+var upload = multer({
+  storage: storage
+});
+var cpUpload = upload.any();
+app.use(cpUpload);
 
-app.use('/', routes);
-app.use('/users', users);
-
-// catch 404 and forward to error handler
+app.use(express.static(path.join(__dirname, 'public')));//静态文件存放地
+router(app);
 app.use(function(req, res, next) {
   var err = new Error('Not Found');
   err.status = 404;
   next(err);
 });
 
-// error handlers
 
-// development error handler
-// will print stacktrace
+
+/* will print stacktrace
 if (app.get('env') === 'development') {
   app.use(function(err, req, res, next) {
     res.status(err.status || 500);
@@ -55,6 +79,7 @@ app.use(function(err, req, res, next) {
     error: {}
   });
 });
+*/
 
 
 module.exports = app;
